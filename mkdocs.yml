@@ -87,7 +87,6 @@ nav:
       - Running evaluations: guides/running-evaluations.md
       - Reading results: guides/reading-results.md
       - Use a Vellum assistant as the model: guides/vellum-as-model.md
-      - Publishing to the Hub: guides/publishing.md
   - Reference:
       - Configuration: reference/configuration.md
       - Architecture: reference/architecture.md

@@ -9,7 +9,7 @@ description: "How convomem-arena maps onto Prime Intellect's verifiers v1 concep
 |---|---|---|
 | **verifiers** (`import verifiers.v1 as vf`) | Framework: tasks, tools, judges, rewards, and the runner that puts an agent on a task and records a trace | Every class here subclasses a `vf.*` base |
 | **prime-envs** | Prime Intellect's repo of first-party environments; the source of conventions (layout, prompting rules, README style) | This package follows those conventions and can drop in as `environments/<group>/convomem_arena` |
-| **Environments Hub** | Registry where environment packages are published and installed by ID (`owner/name@version`) | `prime env push` publishes this folder as `convomem-arena` |
+| **Environments Hub** | Registry where environment packages are published and installed by ID (`owner/name@version`) | Packaged as `convomem-arena`, the ID it would be installed by |
 
 > **verifiers v0 vs. v1.** Older tutorials and many Hub environments (listed as *Legacy*) use the v0 API: `load_environment()`, `vf.SingleTurnEnv`, `vf.ToolEnv`, `vf-eval`. The current release (`verifiers>=0.4.1`) ships only **v1**: `Taskset` / `Task` / `TaskData`, `@vf.reward`, `vf.Toolset`, and the `vf-validate` / `vf-run` CLIs. This package is v1 only.
 

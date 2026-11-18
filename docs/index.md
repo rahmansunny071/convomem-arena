@@ -65,7 +65,7 @@ Answers are graded by **ConvoMem's official RIGHT/WRONG judges**, one per catego
 
     ---
 
-    Recipes for real experiments, reading traces, and publishing to the Hub.
+    Recipes for real experiments, reading traces, and running against a Vellum assistant.
 
     [:octicons-arrow-right-24: Running evaluations](guides/running-evaluations.md)
 

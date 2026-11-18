@@ -58,7 +58,7 @@ The full documentation is at **<https://rahmansunny071.github.io/convomem-arena/
 | **Get started** | [Evaluate a model](docs/getting-started/quickstart.md) · [Evaluate a personal assistant](docs/getting-started/personal-assistant.md) |
 | **Concepts** | [verifiers, prime-envs and the Hub](docs/concepts/verifiers.md) · [The dataset](docs/concepts/dataset.md) · [How a task is built](docs/concepts/tasks.md) · [Memory modes](docs/concepts/memory-modes.md) · [Scoring](docs/concepts/scoring.md) |
 | **Quality** | [Data quality](docs/quality/data-quality.md) · [Judge robustness](docs/quality/judge-robustness.md) |
-| **Guides** | [Running evaluations](docs/guides/running-evaluations.md) · [Reading results](docs/guides/reading-results.md) · [Use a Vellum assistant as the model](docs/guides/vellum-as-model.md) · [Publishing to the Hub](docs/guides/publishing.md) |
+| **Guides** | [Running evaluations](docs/guides/running-evaluations.md) · [Reading results](docs/guides/reading-results.md) · [Use a Vellum assistant as the model](docs/guides/vellum-as-model.md) |
 | **Reference** | [Configuration](docs/reference/configuration.md) · [Architecture](docs/reference/architecture.md) · [Development](docs/reference/development.md) · [Design decisions](docs/reference/design-decisions.md) · [Limitations](docs/reference/limitations.md) · [Troubleshooting](docs/reference/troubleshooting.md) · [Changelog](docs/reference/changelog.md) |
 
 To preview the site locally: `uv pip install -e ".[docs]" && uv run mkdocs serve`.
