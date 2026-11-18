@@ -1,9 +1,0 @@
-{% extends "base.html" %}
-
-{#- A small purple section label above each page title, as on Mintlify-style docs. -#}
-{% block content %}
-  {% if page.parent and page.file.src_uri != "index.md" %}
-    <p class="cma-eyebrow">{{ page.parent.title }}</p>
-  {% endif %}
-  {{ super() }}
-{% endblock %}

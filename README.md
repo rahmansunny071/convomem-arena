@@ -1,73 +1,86 @@
 # convomem-arena
 
-**A conversational-memory environment for agentic systems, built on [verifiers](https://github.com/PrimeIntellect-ai/verifiers) v1 for the Prime Intellect Environments Hub.**
+**Conversational-memory tasks for agents, from [Salesforce ConvoMem](https://huggingface.co/datasets/Salesforce/ConvoMem), on verifiers v1.**
 
-convomem-arena turns [Salesforce ConvoMem](https://huggingface.co/datasets/Salesforce/ConvoMem) ([paper](https://arxiv.org/abs/2511.10523), [reference code](https://github.com/SalesforceAIResearch/ConvoMem)) into tasks for evaluation and RL. Each task asks a question about a user's earlier conversations with the assistant: a fact the user stated, something the assistant recommended, a detail that later changed, a preference to respect, or something that was never said at all. The agent has to find the answer in a history that also contains many unrelated conversations from the same person.
+Each task asks a question about a user's earlier conversations with an assistant: a fact the user stated, something the assistant recommended, a detail that later changed, a preference to respect, or something that was never said at all. The answer is buried in a history that also holds many unrelated conversations from the same person. ConvoMem has 75,336 such items across 100 personas; tasks are built on the fly from the pinned dataset, so a run downloads only the files it needs.
 
-The same tasks can reach the agent in three ways. That lets you measure **long-context recall** and **agentic memory use** on identical data:
+The same tasks reach the agent in three ways, so long-context recall and agentic memory use are measured on identical data:
 
-| `memory_mode` | What the agent gets | Tools | Tests |
-|---|---|---|---|
-| `context` (default) | The full history in the prompt, using ConvoMem's official answer prompt | none | Long-context recall (the paper's baseline) |
-| `tools` | Only the question. The history sits behind a per-rollout MCP memory server | `memory_search`, `memory_read_conversation`, `memory_list_conversations` | Agentic retrieval: deciding what to look up, and when |
-| `files` | Only the question. The history is written to `memory/conversation_NNN.txt` in the agent's workspace | Whatever the harness provides (e.g. `bash`) | Memory as a filesystem, with general-purpose tools |
+| `memory_mode` | What the agent gets | Tests |
+|---|---|---|
+| `context` (default) | The full history in the prompt, using ConvoMem's official answer prompt | Long-context recall (the paper's baseline) |
+| `tools` | Only the question; the history sits behind a per-rollout MCP server with `memory_search` (BM25), `memory_read_conversation` and `memory_list_conversations` | Agentic retrieval: deciding what to look up, and when |
+| `files` | Only the question; the history is written to `memory/conversation_NNN.txt` | Memory as a filesystem, with the harness's own tools |
 
-Answers are graded by **ConvoMem's official RIGHT/WRONG LLM judges**, using the matching judge for each category. In `tools` mode the environment also measures **whether the agent actually retrieved the evidence**.
+Full documentation: **<https://rahmansunny071.github.io/convomem-arena/>** · Source: <https://github.com/rahmansunny071/convomem-arena>
 
----
-
-## Quick start: evaluate a model
-
-Requirements: Python ≥ 3.11 and [uv](https://docs.astral.sh/uv/).
+## Quick start
 
 ```bash
-git clone https://github.com/rahmansunny071/convomem-arena.git && cd convomem-arena
-uv venv --python 3.12
-uv pip install -e ".[dev]"
+prime env install <owner>/convomem-arena
 
-# 1. check that tasks load and set up, with no model calls and no API key
-uv run vf-validate convomem-arena -n 6 --only-setup --runtime.type subprocess
+# check that tasks load (no model calls, no API key)
+vf-validate convomem-arena -n 6 --only-setup --runtime.type subprocess
 
-# 2. run a few real episodes (needs a model + judge endpoint; defaults use PRIME_API_KEY)
-export PRIME_API_KEY=...
-uv run vf-run convomem-arena -n 6 -r 1 -m <model> \
+# run six episodes, one per category (agent and judge default to Prime Inference)
+vf-run convomem-arena -n 6 -r 1 -m <model> \
   --env.agent.harness.id null --env.agent.runtime.type subprocess
 ```
 
-`-n 6` already covers all six categories. **No API key?** The [quick start](docs/getting-started/quickstart.md#run-fully-local-with-ollama) also shows a fully local run with Ollama, using one model as both agent and judge.
-
-## Quick start: evaluate a personal assistant
-
-A personal assistant is never handed its history: it hears each conversation once, decides what to remember, and has to find it again later. `convomem_arena.vellum_eval` tests that with [Vellum](https://github.com/vellum-ai/vellum-assistant), an open-source assistant with its own memory system. It makes a Vellum instance live through one persona's conversations, lets it build its memory its own way, then asks the questions and grades the answers with the same official judges.
+Fully local, with one Ollama model as both agent and judge:
 
 ```bash
-python -m convomem_arena.vellum_eval.run \
-  --source /path/to/vellum-assistant \
-  --instance vellum-rsi-eval --persona Small_Business_Owner \
-  --per-category 2 --history-size 16
+export OLLAMA_FAKE_KEY=unused
+vf-run convomem-arena -n 6 -r 1 -m qwen3:30b-a3b \
+  --client.base-url http://127.0.0.1:11434/v1 --client.api-key-var OLLAMA_FAKE_KEY \
+  --env.agent.harness.id null --env.agent.runtime.type subprocess \
+  --env.taskset.context-sizes 10 \
+  --env.taskset.task.judge.base-url http://127.0.0.1:11434/v1 \
+  --env.taskset.task.judge.api-key-var OLLAMA_FAKE_KEY \
+  --env.taskset.task.judge.model qwen3:30b-a3b
 ```
 
-Use a dedicated, freshly hatched instance: the build restores snapshots over its workspace. The [assistant quick start](docs/getting-started/personal-assistant.md) covers the four stages, the requirements and how to read the result.
+## Categories
 
-## Documentation
+| Category | Tests | Graded against |
+|---|---|---|
+| `user_facts` | Recall of what the user said, possibly across several conversations | gold answer |
+| `assistant_facts` | Recall of what the assistant said or recommended | gold answer |
+| `changing_facts` | Only the latest value of something that changed | gold answer |
+| `abstention` | Recognising that the answer was never given | refusal is RIGHT |
+| `preferences` | Recommendations that respect stated preferences | rubric |
+| `implicit_connections` | Connecting indirect context | rubric |
 
-The full documentation is at **<https://rahmansunny071.github.io/convomem-arena/>**. The same pages live in [`docs/`](docs/):
+Tasks are interleaved across categories, so `-n 6` already covers all six. Evidence is mixed into same-persona filler with ConvoMem's official algorithm, seeded per task, keeping evidence order (which defines the answer for `changing_facts`).
 
-| | |
-|---|---|
-| **Get started** | [Evaluate a model](docs/getting-started/quickstart.md) · [Evaluate a personal assistant](docs/getting-started/personal-assistant.md) |
-| **Concepts** | [verifiers, prime-envs and the Hub](docs/concepts/verifiers.md) · [The dataset](docs/concepts/dataset.md) · [How a task is built](docs/concepts/tasks.md) · [Memory modes](docs/concepts/memory-modes.md) · [Scoring](docs/concepts/scoring.md) |
-| **Quality** | [Data quality](docs/quality/data-quality.md) · [Judge robustness](docs/quality/judge-robustness.md) |
-| **Guides** | [Running evaluations](docs/guides/running-evaluations.md) · [Reading results](docs/guides/reading-results.md) · [Use a Vellum assistant as the model](docs/guides/vellum-as-model.md) |
-| **Reference** | [Configuration](docs/reference/configuration.md) · [Architecture](docs/reference/architecture.md) · [Development](docs/reference/development.md) · [Design decisions](docs/reference/design-decisions.md) · [Limitations](docs/reference/limitations.md) · [Troubleshooting](docs/reference/troubleshooting.md) · [Changelog](docs/reference/changelog.md) |
+## Scoring
 
-To preview the site locally: `uv pip install -e ".[docs]" && uv run mkdocs serve`.
+- **Reward `correct`** (weight 1.0): 1.0 when the category's ConvoMem judge says RIGHT. The judge prompts are copied verbatim from the reference implementation, one per category. A reply with neither RIGHT nor WRONG **raises** instead of scoring 0, so a broken judge surfaces as an error.
+- **Metrics** (`tools` mode, recorded, never rewarded): `memory_tool_calls`, `evidence_recall` (share of evidence conversations the agent retrieved) and `conversations_retrieved`. Low recall with a wrong answer is a search failure; high recall with a wrong answer is a reasoning failure.
+
+## Configuration
+
+| Flag | Default | Meaning |
+|---|---|---|
+| `--env.taskset.categories` | all six | Subset of categories |
+| `--env.taskset.evidence-counts` | all | Keep items with these evidence counts (1–6) |
+| `--env.taskset.context-sizes` | `1 10 30` | Conversations per history; one task per size per item (the paper uses up to 300) |
+| `--env.taskset.seed` | `0` | Seeds item order and every mix |
+| `--env.taskset.task.memory-mode` | `context` | `context`, `tools` or `files` |
+| `--env.taskset.task.max-turns` | `40` | Model calls per rollout |
+| `--env.taskset.task.judge.model` / `.base-url` / `.api-key-var` | Prime Inference | The judge endpoint |
+
+The full reference is in the [documentation](https://rahmansunny071.github.io/convomem-arena/reference/configuration/).
+
+## Notes
+
+- **Sandbox shell harnesses.** With `bash` or any shell-capable harness on the `subprocess` runtime, the agent's shell runs on the evaluator host, which also holds the Hugging Face cache with gold answers. Use the `null` harness for `context` and `tools`, and `docker` or `prime` for `files` mode.
+- **Keep the judge fixed** across compared runs; the rubric categories are especially sensitive to the judge model.
+- **Comparable in protocol, not item for item:** samples are drawn here rather than taken from ConvoMem's pre-mixed test cases.
 
 ## Citation and license
 
-If you use this environment, please cite ConvoMem:
-
-> ConvoMem, Salesforce AI Research, arXiv:2511.10523 (2025). Use the BibTeX from <https://arxiv.org/abs/2511.10523>.
+If you use this environment, please cite ConvoMem: Salesforce AI Research, arXiv:2511.10523 (2025), BibTeX at <https://arxiv.org/abs/2511.10523>.
 
 - **Dataset:** [Salesforce/ConvoMem](https://huggingface.co/datasets/Salesforce/ConvoMem), **CC-BY-NC-4.0** (non-commercial use only).
 - **Judge prompts and mixing algorithm:** ported verbatim from [SalesforceAIResearch/ConvoMem](https://github.com/SalesforceAIResearch/ConvoMem), **Apache License 2.0**.
