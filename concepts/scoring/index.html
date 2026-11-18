@@ -783,6 +783,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#exact-match-for-fact-categories" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Exact match for fact categories
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#judges" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1413,6 +1424,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#exact-match-for-fact-categories" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Exact match for fact categories
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#judges" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1472,10 +1494,22 @@
 <tr>
 <td><code>correct</code></td>
 <td>1.0</td>
-<td><code>1.0</code> if the category's ConvoMem judge says RIGHT, else <code>0.0</code>. An empty final reply scores <code>0.0</code> without calling the judge</td>
+<td><code>1.0</code> if the category's ConvoMem judge says RIGHT, else <code>0.0</code>. An empty final reply scores <code>0.0</code> without calling the judge. With <code>fact-scoring exact_match</code>, the three fact categories use the deterministic check below instead</td>
 </tr>
 </tbody>
 </table>
+<h2 id="exact-match-for-fact-categories">Exact match for fact categories<a class="headerlink" href="#exact-match-for-fact-categories" title="Permanent link">&para;</a></h2>
+<p>The official judges make scores comparable with the ConvoMem paper, but each one is a model call: it costs time and money, needs an endpoint, and can vary between runs. For <code>user_facts</code>, <code>assistant_facts</code> and <code>changing_facts</code> there is a deterministic alternative.</p>
+<p>ConvoMem's gold answers are full sentences, so a literal comparison almost never matches. Instead a reply <strong>matches when it contains the answer's details</strong>: the names and numbers the question doesn't already contain. <em>"The concert has been postponed to April 10th of next year"</em> needs <code>april</code> and <code>10</code>. Answers with no names or numbers fall back to their content words. Two guards keep it from being gamed when used as a training reward:</p>
+<ul>
+<li><strong>No dumping:</strong> a reply longer than max(100, 5 × the answer's words) scores 0.</li>
+<li><strong>No stale numbers</strong> (<code>changing_facts</code>): a reply that also states a number from an earlier evidence message, one the latest message and the answer no longer contain, scores 0. <em>"October 5th or April 10th"</em> fails; <em>"postponed from the original October date to April 10th"</em> passes.</li>
+</ul>
+<p>It is recorded as the <code>exact_match</code> metric on every fact-category rollout, whatever the reward uses, so the two can be compared on any run. To make it the reward and skip the judge for those categories:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>vf-run<span class="w"> </span>convomem-arena<span class="w"> </span>...<span class="w"> </span>--env.taskset.task.fact-scoring<span class="w"> </span>exact_match
+</code></pre></div>
+<p>The other three categories always use their judge: abstention and the two rubric categories have no string to match.</p>
+<p><strong>How well it agrees with the judge.</strong> On 36 replies the judge had graded (24 from local runs and 12 from a Vellum memory evaluation), exact match gave the same verdict every time; the guards were tuned on the first 24, and the 12 were held out. On judge-robustness cases with known answers it accepted all 12 correct replies, including under a reworded question, and rejected 11 of 12 planted wrong replies. The miss shows its limit: in <em>"a Caprese salad, a tomato basil pasta sauce and pesto"</em> only "Caprese" is a name, so a reply that gets the other two dishes wrong still passes. Requiring most content words as well catches that case but rejects correct paraphrases, so it is left out.</p>
 <h2 id="judges">Judges<a class="headerlink" href="#judges" title="Permanent link">&para;</a></h2>
 <p>The judge prompts are copied <strong>verbatim</strong> from the reference implementation (<code>questions/evidence/generation/AnsweringEvaluation.scala</code>). Each category uses the same evaluator the paper does:</p>
 <table>
