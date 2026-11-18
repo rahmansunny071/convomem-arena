@@ -17,7 +17,7 @@ Full documentation: **<https://rahmansunny071.github.io/convomem-arena/>** · So
 ## Quick start
 
 ```bash
-prime env install <owner>/convomem-arena
+prime env install memcova/convomem-arena
 
 # check that tasks load (no model calls, no API key)
 vf-validate convomem-arena -n 6 --only-setup --runtime.type subprocess
