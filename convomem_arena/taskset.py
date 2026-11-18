@@ -11,6 +11,8 @@ official ConvoMem mixing), and the history reaches the agent in one of three way
   conversation under `memory/`, for coding harnesses with their own file tools.
 
 The final reply is graded by the official ConvoMem RIGHT/WRONG judge for its category.
+For the three fact categories, `fact_scoring = "exact_match"` grades it deterministically
+instead (`exact_match.py`), and the `exact_match` metric is recorded either way.
 """
 
 from __future__ import annotations
@@ -35,11 +37,13 @@ from convomem_arena.data import (
     mix,
     round_robin,
 )
+from convomem_arena.exact_match import FACT_CATEGORIES, exact_match
 from convomem_arena.judges import format_evidence, judge_for
 from convomem_arena.models import ConvoMemData, MemoryState
 from convomem_arena.servers.memory import MemoryToolset
 
 MemoryMode = Literal["context", "tools", "files"]
+FactScoring = Literal["judge", "exact_match"]
 
 SELF_REFERENCE = (
     'If the User in the conversations refers to themselves ("I", "me", "my"), they are '
@@ -84,6 +88,11 @@ class ConvoMemTaskConfig(vf.TaskConfig):
     """Placement of the per-rollout memory tool server (`tools` mode)."""
     max_turns: int = Field(40, ge=1)
     """Model calls allowed per rollout before it is stopped."""
+    fact_scoring: FactScoring = "judge"
+    """How `user_facts`, `assistant_facts` and `changing_facts` are rewarded: `judge`
+    (the official ConvoMem judges, comparable with the paper) or `exact_match` (the
+    deterministic check in `exact_match.py`: no judge call, cheap and stable for
+    training). The other categories always use their judge."""
 
 
 class ConvoMemTask(vf.Task[ConvoMemData, MemoryState, ConvoMemTaskConfig]):
@@ -115,11 +124,22 @@ class ConvoMemTask(vf.Task[ConvoMemData, MemoryState, ConvoMemTaskConfig]):
     async def turn_limit(self, trace: vf.Trace) -> bool:
         return trace.num_turns >= self.config.max_turns
 
+    def _exact_match(self, response: str) -> float:
+        return exact_match(
+            response,
+            self.data.answer,
+            self.data.question,
+            self.data.category,
+            self.data.evidence_messages,
+        )
+
     @vf.reward(weight=1.0)
     async def correct(self, trace: vf.Trace) -> float:
         response = trace.last_reply or ""
         if not response.strip():
             return 0.0
+        if self.config.fact_scoring == "exact_match" and self.data.category in FACT_CATEGORIES:
+            return self._exact_match(response)
         judge = judge_for(self.data.category, self.data.evidence_count, self.config.judge)
         result = await judge.evaluate(
             trace=trace,
@@ -131,6 +151,14 @@ class ConvoMemTask(vf.Task[ConvoMemData, MemoryState, ConvoMemTaskConfig]):
             ),
         )
         return float(result.parsed)
+
+    @vf.metric
+    async def deterministic(self, trace: vf.Trace) -> dict[str, float]:
+        """The exact-match score for fact categories, recorded beside the reward whichever
+        scorer the reward uses, so the two can be compared on every run."""
+        if self.data.category not in FACT_CATEGORIES:
+            return {}
+        return {"exact_match": self._exact_match(trace.last_reply or "")}
 
     @vf.metric
     async def memory(self, trace: vf.Trace) -> dict[str, float]:
