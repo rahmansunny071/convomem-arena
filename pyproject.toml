@@ -1,6 +1,6 @@
 [project]
 name = "convomem-arena"
-version = "0.1.1"
+version = "0.1.2"
 description = "ConvoMem conversational-memory tasks: answer questions about a user's past conversations, delivered in context, through memory tools, or as files (official ConvoMem LLM judges)."
 tags = ["memory", "long-context", "multi-turn", "tool-use", "llm-judge", "eval", "train", "v1"]
 requires-python = ">=3.11"
