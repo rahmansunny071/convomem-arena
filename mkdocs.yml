@@ -81,6 +81,7 @@ nav:
           - Memory modes: concepts/memory-modes.md
           - Scoring: concepts/scoring.md
       - Quality:
+          - Data card: quality/data-card.md
           - Data quality: quality/data-quality.md
           - Judge robustness: quality/judge-robustness.md
   - Guides:
