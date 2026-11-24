@@ -1527,42 +1527,57 @@
 <h1 id="quick-start-evaluate-a-model">Quick start: evaluate a model<a class="headerlink" href="#quick-start-evaluate-a-model" title="Permanent link">&para;</a></h1>
 <p>You need Python ≥ 3.11 and <a href="https://docs.astral.sh/uv/">uv</a>.</p>
 <h2 id="1-install">1. Install<a class="headerlink" href="#1-install" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/rahmansunny071/convomem-arena.git
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="nb">cd</span><span class="w"> </span>convomem-arena
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>uv<span class="w"> </span>venv<span class="w"> </span>--python<span class="w"> </span><span class="m">3</span>.12
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>uv<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span><span class="s2">".[dev]"</span>
+<div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><input id="__tabbed_1_2" name="__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="__tabbed_1_1">Environments Hub</label><label for="__tabbed_1_2">From source</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<p>Install the published package, <a href="https://app.primeintellect.ai/dashboard/environments/memcova/convomem-arena"><code>memcova/convomem-arena</code></a>, with the <a href="https://github.com/PrimeIntellect-ai/prime-cli">prime CLI</a>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>uv<span class="w"> </span>tool<span class="w"> </span>install<span class="w"> </span>prime
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>uv<span class="w"> </span>venv<span class="w"> </span>--python<span class="w"> </span><span class="m">3</span>.12<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="nb">source</span><span class="w"> </span>.venv/bin/activate
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>prime<span class="w"> </span>env<span class="w"> </span>install<span class="w"> </span>memcova/convomem-arena
 </code></pre></div>
+<p>Or with pip alone: <code>uv pip install convomem_arena --extra-index-url https://hub.primeintellect.ai/memcova/convomem-arena/install/simple/</code>. Run the commands below without <code>uv run</code>.</p>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/rahmansunny071/convomem-arena.git
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="nb">cd</span><span class="w"> </span>convomem-arena
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>uv<span class="w"> </span>venv<span class="w"> </span>--python<span class="w"> </span><span class="m">3</span>.12
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>uv<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span><span class="s2">".[dev]"</span>
+</code></pre></div>
+<p>The source also holds the docs, the quality checkers and the personal-assistant evaluation, which the Hub package leaves out.</p>
+</div>
+</div>
+</div>
 <h2 id="2-check-that-tasks-load">2. Check that tasks load<a class="headerlink" href="#2-check-that-tasks-load" title="Permanent link">&para;</a></h2>
 <p>This builds six tasks, one per category, and sets each one up. It makes no model calls and needs no API key.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>uv<span class="w"> </span>run<span class="w"> </span>vf-validate<span class="w"> </span>convomem-arena<span class="w"> </span>-n<span class="w"> </span><span class="m">6</span><span class="w"> </span>--only-setup<span class="w"> </span>--runtime.type<span class="w"> </span>subprocess
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>uv<span class="w"> </span>run<span class="w"> </span>vf-validate<span class="w"> </span>convomem-arena<span class="w"> </span>-n<span class="w"> </span><span class="m">6</span><span class="w"> </span>--only-setup<span class="w"> </span>--runtime.type<span class="w"> </span>subprocess
 </code></pre></div>
 <p><code>-n 6</code> already covers all six categories, because tasks are interleaved across categories (<a href="../../concepts/tasks/#ordering-and-laziness">why</a>).</p>
 <h2 id="3-run-your-first-episodes">3. Run your first episodes<a class="headerlink" href="#3-run-your-first-episodes" title="Permanent link">&para;</a></h2>
 <p>The run needs two models: the <strong>agent</strong> that answers, and the <strong>judge</strong> that grades the answer.</p>
-<div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><input id="__tabbed_1_2" name="__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="__tabbed_1_1">Prime Inference</label><label for="__tabbed_1_2">Local (Ollama)</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="2:2"><input checked="checked" id="__tabbed_2_1" name="__tabbed_2" type="radio" /><input id="__tabbed_2_2" name="__tabbed_2" type="radio" /><div class="tabbed-labels"><label for="__tabbed_2_1">Prime Inference</label><label for="__tabbed_2_2">Local (Ollama)</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <p>By default both use Prime Inference, with the key in <code>PRIME_API_KEY</code>.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="nb">export</span><span class="w"> </span><span class="nv">PRIME_API_KEY</span><span class="o">=</span>...
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>uv<span class="w"> </span>run<span class="w"> </span>vf-run<span class="w"> </span>convomem-arena<span class="w"> </span>-n<span class="w"> </span><span class="m">6</span><span class="w"> </span>-r<span class="w"> </span><span class="m">1</span><span class="w"> </span>-m<span class="w"> </span>&lt;model&gt;<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="w">  </span>--env.agent.harness.id<span class="w"> </span>null<span class="w"> </span>--env.agent.runtime.type<span class="w"> </span>subprocess
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="nb">export</span><span class="w"> </span><span class="nv">PRIME_API_KEY</span><span class="o">=</span>...
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>uv<span class="w"> </span>run<span class="w"> </span>vf-run<span class="w"> </span>convomem-arena<span class="w"> </span>-n<span class="w"> </span><span class="m">6</span><span class="w"> </span>-r<span class="w"> </span><span class="m">1</span><span class="w"> </span>-m<span class="w"> </span>&lt;model&gt;<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="w">  </span>--env.agent.harness.id<span class="w"> </span>null<span class="w"> </span>--env.agent.runtime.type<span class="w"> </span>subprocess
 </code></pre></div>
 </div>
 <div class="tabbed-block">
 <h2 id="run-fully-local-with-ollama">Run fully local with Ollama<a class="headerlink" href="#run-fully-local-with-ollama" title="Permanent link">&para;</a></h2>
 <p>No API key needed: <code>qwen3:30b-a3b</code> serves as both the agent and the judge (verified end to end: 6/6, mean reward 1.000).</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="c1"># Ollama must be serving the model at 127.0.0.1:11434 first:</span>
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="c1">#   ollama pull qwen3:30b-a3b &amp;&amp; ollama run qwen3:30b-a3b "reply with one word: ok"</span>
-<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>
-<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="nb">export</span><span class="w"> </span><span class="nv">OLLAMA_FAKE_KEY</span><span class="o">=</span>unused<span class="w">   </span><span class="c1"># ignored by Ollama; vf-run just needs the variable set</span>
-<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>
-<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>uv<span class="w"> </span>run<span class="w"> </span>vf-run<span class="w"> </span>convomem-arena<span class="w"> </span>-n<span class="w"> </span><span class="m">6</span><span class="w"> </span>-r<span class="w"> </span><span class="m">1</span><span class="w"> </span>-m<span class="w"> </span>qwen3:30b-a3b<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="w">  </span>--client.base-url<span class="w"> </span>http://127.0.0.1:11434/v1<span class="w"> </span>--client.api-key-var<span class="w"> </span>OLLAMA_FAKE_KEY<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a><span class="w">  </span>--env.agent.harness.id<span class="w"> </span>null<span class="w"> </span>--env.agent.runtime.type<span class="w"> </span>subprocess<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a><span class="w">  </span>--env.taskset.context-sizes<span class="w"> </span><span class="m">10</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a><span class="w">  </span>--env.taskset.task.judge.base-url<span class="w"> </span>http://127.0.0.1:11434/v1<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a><span class="w">  </span>--env.taskset.task.judge.api-key-var<span class="w"> </span>OLLAMA_FAKE_KEY<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a><span class="w">  </span>--env.taskset.task.judge.model<span class="w"> </span>qwen3:30b-a3b
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="c1"># Ollama must be serving the model at 127.0.0.1:11434 first:</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="c1">#   ollama pull qwen3:30b-a3b &amp;&amp; ollama run qwen3:30b-a3b "reply with one word: ok"</span>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="nb">export</span><span class="w"> </span><span class="nv">OLLAMA_FAKE_KEY</span><span class="o">=</span>unused<span class="w">   </span><span class="c1"># ignored by Ollama; vf-run just needs the variable set</span>
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>uv<span class="w"> </span>run<span class="w"> </span>vf-run<span class="w"> </span>convomem-arena<span class="w"> </span>-n<span class="w"> </span><span class="m">6</span><span class="w"> </span>-r<span class="w"> </span><span class="m">1</span><span class="w"> </span>-m<span class="w"> </span>qwen3:30b-a3b<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="w">  </span>--client.base-url<span class="w"> </span>http://127.0.0.1:11434/v1<span class="w"> </span>--client.api-key-var<span class="w"> </span>OLLAMA_FAKE_KEY<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a><span class="w">  </span>--env.agent.harness.id<span class="w"> </span>null<span class="w"> </span>--env.agent.runtime.type<span class="w"> </span>subprocess<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a><span class="w">  </span>--env.taskset.context-sizes<span class="w"> </span><span class="m">10</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a><span class="w">  </span>--env.taskset.task.judge.base-url<span class="w"> </span>http://127.0.0.1:11434/v1<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a><span class="w">  </span>--env.taskset.task.judge.api-key-var<span class="w"> </span>OLLAMA_FAKE_KEY<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-4-12" name="__codelineno-4-12" href="#__codelineno-4-12"></a><span class="w">  </span>--env.taskset.task.judge.model<span class="w"> </span>qwen3:30b-a3b
 </code></pre></div>
 <div class="admonition warning">
 <p class="admonition-title">A smoke test, not a measurement</p>
