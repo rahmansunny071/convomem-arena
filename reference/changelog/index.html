@@ -23,7 +23,7 @@
       
       
       <link rel="icon" href="../../assets/favicon.svg">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.8.1">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.8.2">
     
     
       
@@ -1336,6 +1336,7 @@
 
 <h1 id="changelog">Changelog<a class="headerlink" href="#changelog" title="Permanent link">&para;</a></h1>
 <ul>
+<li>2026-11-23 (0.1.4): Exact match is documented as a cheap sanity check; use the official judges for full-scale evaluation and leaderboards. Exact match hardened after <a href="https://github.com/rahmansunny071/convomem-arena/issues/11">issue #11</a>: denied, hedged and retracted answers, and lists of candidate names, now score 0; answers and replies are read the same way (accents, <code>a.m.</code>, letters glued to digits, hyphenated and possessive names, numbers with separators), so every gold answer matches itself.</li>
 <li>2026-11-18: Optional deterministic scoring for the fact categories (<code>fact-scoring exact_match</code>), and an <code>exact_match</code> metric recorded on every fact-category rollout.</li>
 <li>2026-11-17: Data quality checker (<code>python -m convomem_arena.data_check</code>): structural checks, answer grounding, changing-fact order, filler contamination and duplicates on a persona-spread sample.</li>
 <li>

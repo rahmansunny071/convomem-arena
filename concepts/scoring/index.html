@@ -23,7 +23,7 @@
       
       
       <link rel="icon" href="../../assets/favicon.svg">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.8.1">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.8.2">
     
     
       
@@ -1499,17 +1499,76 @@
 </tbody>
 </table>
 <h2 id="exact-match-for-fact-categories">Exact match for fact categories<a class="headerlink" href="#exact-match-for-fact-categories" title="Permanent link">&para;</a></h2>
+<div class="admonition warning">
+<p class="admonition-title">A sanity check, not a benchmark score</p>
+<p>Exact match is meant as a <strong>cheap sanity check</strong> that the environment runs end to end and that replies contain the expected facts, with no judge endpoint and no cost. <strong>For any full-scale evaluation, published result or leaderboard, always use the official judges</strong> (the default, <code>fact-scoring judge</code>), and keep the judge model fixed across compared runs.</p>
+</div>
 <p>The official judges make scores comparable with the ConvoMem paper, but each one is a model call: it costs time and money, needs an endpoint, and can vary between runs. For <code>user_facts</code>, <code>assistant_facts</code> and <code>changing_facts</code> there is a deterministic alternative.</p>
-<p>ConvoMem's gold answers are full sentences, so a literal comparison almost never matches. Instead a reply <strong>matches when it contains the answer's details</strong>: the names and numbers the question doesn't already contain. <em>"The concert has been postponed to April 10th of next year"</em> needs <code>april</code> and <code>10</code>. Answers with no names or numbers fall back to their content words. Two guards keep it from being gamed when used as a training reward:</p>
+<p>ConvoMem's gold answers are full sentences, so a literal comparison almost never matches. Instead a reply <strong>matches when it contains the answer's details</strong>: the names and numbers the question doesn't already contain. <em>"The concert has been postponed to April 10th of next year"</em> needs <code>april</code> and <code>10</code>. Answers with no names or numbers fall back to their content words. The answer and the reply are read the same way: accents are dropped (<em>Brené</em> = <em>Brene</em>), dotted abbreviations closed (<em>a.m.</em> = <em>AM</em>), letters split from digits (<em>XY123456</em> = <em>XY 123456</em>), and numbers are compared only with numbers (<em>$2,100</em> is 2100, not 2 and 100).</p>
+<p>Four guards keep it from being gamed when used as a training reward:</p>
 <ul>
 <li><strong>No dumping:</strong> a reply longer than max(100, 5 × the answer's words) scores 0.</li>
+<li><strong>No candidate lists:</strong> a reply scores 0 when it offers more than 8 names or numbers that neither the answer nor the question contains, 3 or more making up over half its words, 2 or more in a reply that is at least 75% names and numbers, or 3 or more new words with almost no function words (a list in lower case). <em>"Liam Petrov, Acme, Boston"</em> fails; <em>"Liam Petrov, from Acme Corp in Boston."</em> passes.</li>
+<li><strong>No hedging or denial:</strong> a reply scores 0 when it voices doubt the answer doesn't (<em>I don't remember</em>, <em>maybe</em>, <em>not sure</em>, <em>wrong</em>), when the sentences stating the answer's details use <em>not</em>, <em>no</em>, <em>never</em>, <em>or</em>, <em>either</em>, <em>neither</em> or <em>n't</em> more often than the answer does, or when a sentence of its own rejects or adds an alternative (<em>Nope.</em>, <em>That's not right.</em>, <em>Or October.</em>).</li>
 <li><strong>No stale numbers</strong> (<code>changing_facts</code>): a reply that also states a number from an earlier evidence message, one the latest message and the answer no longer contain, scores 0. <em>"October 5th or April 10th"</em> fails; <em>"postponed from the original October date to April 10th"</em> passes.</li>
 </ul>
 <p>It is recorded as the <code>exact_match</code> metric on every fact-category rollout, whatever the reward uses, so the two can be compared on any run. To make it the reward and skip the judge for those categories:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>vf-run<span class="w"> </span>convomem-arena<span class="w"> </span>...<span class="w"> </span>--env.taskset.task.fact-scoring<span class="w"> </span>exact_match
 </code></pre></div>
 <p>The other three categories always use their judge: abstention and the two rubric categories have no string to match.</p>
-<p><strong>How well it agrees with the judge.</strong> On 36 replies the judge had graded (24 from local runs and 12 from a Vellum memory evaluation), exact match gave the same verdict every time; the guards were tuned on the first 24, and the 12 were held out. On judge-robustness cases with known answers it accepted all 12 correct replies, including under a reworded question, and rejected 11 of 12 planted wrong replies. The miss shows its limit: in <em>"a Caprese salad, a tomato basil pasta sauce and pesto"</em> only "Caprese" is a name, so a reply that gets the other two dishes wrong still passes. Requiring most content words as well catches that case but rejects correct paraphrases, so it is left out.</p>
+<p><strong>How well it agrees with the judge.</strong> On 36 replies the judge had graded (24 from local runs and 12 from a Vellum memory evaluation), exact match gave the same verdict every time. Those were ordinary replies, so they say nothing about replies written to game the check.</p>
+<p><strong>How hard it is to game.</strong> <a href="https://github.com/rahmansunny071/convomem-arena/issues/11">Issue #11</a> showed that the first version gave full credit to denied or hedged answers (<em>"It is not April 10th."</em>), to a list of the history's names on 30–39% of tasks, and failed about 1.5% of gold answers on themselves. On the 8,451 fact items of the cached evidence files (pinned revision), the current version:</p>
+<table>
+<thead>
+<tr>
+<th>Reply</th>
+<th>Scores 1.0 (before → now)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>the gold answer itself, or lower-cased, or with a friendly opener or closer</td>
+<td>98.5% → 99.9–100%</td>
+</tr>
+<tr>
+<td>the gold answer plus a few more names</td>
+<td>98.5% → 99.5%</td>
+</tr>
+<tr>
+<td>the gold answer plus the latest evidence message quoted</td>
+<td>98.5% → 94.2%</td>
+</tr>
+<tr>
+<td><em>I don't remember. It is not this:</em> + gold</td>
+<td>98.5% → 0.1%</td>
+</tr>
+<tr>
+<td>gold + <em>No, that is wrong, and I don't remember…</em></td>
+<td>98.5% → 0.0%</td>
+</tr>
+<tr>
+<td><em>Either</em> (another answer) <em>or</em> gold. <em>I can't tell which.</em></td>
+<td>95.2% → 2.9%</td>
+</tr>
+<tr>
+<td>gold + <em>That is not it.</em></td>
+<td>98.5% → 1.0%</td>
+</tr>
+<tr>
+<td><em>Not</em> + gold</td>
+<td>98.5% → 15.0%</td>
+</tr>
+<tr>
+<td>(another answer); gold</td>
+<td>96.2% → 89.2%</td>
+</tr>
+<tr>
+<td>every name and number of the evidence conversation, up to 100 words</td>
+<td>49.6% → 16.0% (23.2% in lower case)</td>
+</tr>
+</tbody>
+</table>
+<p>What it still can't do: tell an alternative from extra detail when nothing marks it (a bare <em>"W; R"</em>), catch a denial worded in a way the phrase lists don't cover, or stop a short list padded with function words. A word-level check cannot reliably separate a denial from ordinary text, which is why exact match is a sanity check: use the official judges for full-scale evaluation, for leaderboards, and whenever a reward will be optimized against. The judge-robustness miss also still holds: in <em>"a Caprese salad, a tomato basil pasta sauce and pesto"</em> only "Caprese" is a name, so a reply that gets the other two dishes wrong still passes.</p>
 <h2 id="judges">Judges<a class="headerlink" href="#judges" title="Permanent link">&para;</a></h2>
 <p>The judge prompts are copied <strong>verbatim</strong> from the reference implementation (<code>questions/evidence/generation/AnsweringEvaluation.scala</code>). Each category uses the same evaluator the paper does:</p>
 <table>
