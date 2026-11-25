@@ -237,3 +237,132 @@ def test_hyphenated_and_possessive_names_the_question_holds_are_not_required_aga
         "james",
         "clear",
     ]
+
+
+# --- doubt with "can't", a denial before the answer, long answers without names -------------
+
+
+@pytest.mark.parametrize(
+    "reply",
+    [
+        "I can't remember. April 10th next year.",
+        "I can't tell. April 10th next year.",
+        "No idea. April 10th next year.",
+        "It is not this. April 10th next year.",  # the denial sits in a sentence of its own
+        "Either this or that. April 10th next year.",
+    ],
+)
+def test_doubt_or_denial_before_the_answer_scores_zero(reply):
+    assert exact_match(reply, GOLD, Q, "changing_facts", EVIDENCE) == 0.0
+
+
+@pytest.mark.parametrize(
+    ("question", "reply"),
+    [
+        ("I can't recall the exact day. When is The National concert now?", None),
+        ("I do not recall the exact day. When is The National concert now?", None),
+        (
+            "I can't recall the exact day. When is The National concert now?",
+            "I cannot recall the exact day either. " + GOLD,
+        ),
+        (
+            "I can't recall the exact day. When is The National concert now?",
+            "I can't recall the exact day, but " + GOLD[0].lower() + GOLD[1:],
+        ),
+    ],
+)
+def test_not_remembering_the_question_voices_may_be_echoed(question, reply):
+    reply = reply or question + " " + GOLD
+    assert exact_match(reply, GOLD, question, "changing_facts", EVIDENCE) == 1.0
+    assert exact_match("I can't recall. " + GOLD, GOLD, Q, "changing_facts", EVIDENCE) == 0.0
+
+
+def test_a_hedge_word_the_question_uses_still_scores_zero():
+    q = "Maybe you remember my go-to spot for dinner?"
+    gold = "Your go-to spot is Siam Spice."
+    assert exact_match(gold, gold, q, "user_facts") == 1.0
+    assert exact_match("Maybe Siam Spice.", gold, q, "user_facts") == 0.0
+
+
+def test_a_denial_the_question_has_may_be_echoed():
+    q = "Which city did I say I would not move to?"
+    reply = "You said there is a city you would not move to. It is Boston."
+    assert exact_match(reply, "Boston.", q, "user_facts") == 1.0
+    assert exact_match(reply, "Boston.", "Which city did I mention?", "user_facts") == 0.0
+    # an "either ... or" in the question doesn't excuse a "not"
+    q = "Did I say Boston or Denver, either one?"
+    assert exact_match("It is not this. It is Boston.", "Boston.", q, "user_facts") == 0.0
+
+
+@pytest.mark.parametrize(
+    "reply",
+    [
+        "Is it not this? April 10th next year.",
+        "Not October, right? April 10th next year.",
+    ],
+)
+def test_a_denial_asked_as_a_question_scores_zero(reply):
+    assert exact_match(reply, GOLD, Q, "changing_facts", EVIDENCE) == 0.0
+
+
+def test_a_rejecting_sentence_with_isnt_scores_zero():
+    assert exact_match("Liam Petrov. That isn't it.", LGOLD, LQ, "user_facts") == 0.0
+    assert exact_match("Liam Petrov. That wasn't it.", LGOLD, LQ, "user_facts") == 0.0
+    assert exact_match("Liam Petrov. That was not it.", LGOLD, LQ, "user_facts") == 0.0
+    assert exact_match("Liam Petrov. That's right.", LGOLD, LQ, "user_facts") == 1.0
+
+
+@pytest.mark.parametrize(
+    "reply",
+    [
+        "No problem! April 10th next year.",
+        "Not a problem! April 10th next year.",
+        "Not to worry! April 10th next year.",
+        "Sure, here it is: April 10th next year.",
+        "Either way, here is what you told me. April 10th next year.",
+        "From what you told me, or at least how I remember it. April 10th next year.",
+        "Do you mean the concert or the tour? April 10th next year.",  # a question asked back
+    ],
+)
+def test_friendly_openers_still_score(reply):
+    assert exact_match(reply, GOLD, Q, "changing_facts", EVIDENCE) == 1.0
+
+
+PQ = "How should I plan my Saturday morning?"
+PGOLD = (
+    "Have breakfast at the small family restaurant. Walk through the quiet garden after that. "
+    "Browse the old bookstore before lunch."
+)
+
+
+@pytest.mark.parametrize(
+    "reply",
+    [
+        "Not " + PGOLD,
+        "Either have breakfast at the small family restaurant or skip it. "
+        + PGOLD.split(". ", 1)[1],
+    ],
+)
+def test_denials_of_a_long_answer_without_names_score_zero(reply):
+    assert exact_match(PGOLD, PGOLD, PQ, "user_facts") == 1.0
+    assert exact_match(reply, PGOLD, PQ, "user_facts") == 0.0
+
+
+def test_a_long_answer_without_names_restated_still_scores():
+    reply = (
+        "Have breakfast at the small family restaurant, then walk through the quiet garden "
+        "and browse the old bookstore before lunch."
+    )
+    assert exact_match(reply, PGOLD, PQ, "user_facts") == 1.0
+
+
+def test_a_one_sentence_answer_restated_over_several_sentences_still_scores():
+    gold = (
+        "Have breakfast at the small family restaurant, walk through the quiet garden, "
+        "and browse the old bookstore before lunch."
+    )
+    reply = (
+        "Have breakfast at the small family restaurant. Then walk through the quiet garden. "
+        "Browse the old bookstore before lunch, but do not rush."
+    )
+    assert exact_match(reply, gold, PQ, "user_facts") == 1.0
